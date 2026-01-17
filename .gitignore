@@ -1,17 +1,42 @@
+# ======================
 # Python
+# ======================
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Virtual env
+# Virtual Environment
 .venv/
 venv/
+.env
 
-# Dataset / data besar
+# ======================
+# Flask / Backend Runtime
+# ======================
+instance/
+uploads/
+static/profile_pics/
+*.db
+
+# ======================
+# Dataset / File Besar
+# ======================
 data/
 dataset/
 *.zip
 *.tar
+*.tar.gz
 
-# OS
+# ======================
+# Frontend
+# ======================
+frontend/node_modules/
+frontend/dist/
+
+# ======================
+# OS / Editor
+# ======================
 .DS_Store
 Thumbs.db
+.vscode/
