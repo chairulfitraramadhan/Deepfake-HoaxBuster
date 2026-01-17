@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+venv/
+
+# Dataset / data besar
+data/
+dataset/
+*.zip
+*.tar
+
+# OS
+.DS_Store
+Thumbs.db

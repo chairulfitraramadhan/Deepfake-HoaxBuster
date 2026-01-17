@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Support Triage - Deepfake Detector</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-robot"></i> AI Support Triage
+        </div>
+        <button id="theme-toggle" class="btn-icon">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </nav>
+
+    <div class="stats-container">
+        <div class="stat-item">
+            <h2><span class="counter" data-target="98">0</span>%</h2>
+            <p>Akurasi Deteksi</p>
+        </div>
+        <div class="stat-item">
+            <h2><span class="counter" data-target="1500">0</span>+</h2>
+            <p>Gambar Dianalisis</p>
+        </div>
+        <div class="stat-item">
+            <h2><span class="counter" data-target="2">0</span> Detik</h2>
+            <p>Kecepatan Proses</p>
+        </div>
+    </div>
+
+    <main class="main-container">
+        
+        <div class="card form-section">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-file-pen"></i> Buat Tiket Baru</h2>
+                <p>Sistem kami akan memvalidasi bukti Anda secara otomatis.</p>
+            </div>
+            
+            <form id="ticketForm" onsubmit="event.preventDefault(); sendTicket();">
+                <div class="input-group">
+                    <label>Nama Lengkap</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="namaInput" placeholder="Contoh: Budi Santoso" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Alamat Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="emailInput" placeholder="nama@email.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Deskripsi Masalah</label>
+                    <div class="input-wrapper textarea-wrapper">
+                        <textarea id="deskripsiInput" placeholder="Jelaskan detail keluhan Anda..." required></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card upload-section">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-magnifying-glass-chart"></i> Bukti Digital</h2>
+                <p>Upload foto wajah/bukti untuk deteksi Deepfake.</p>
+            </div>
+
+            <div class="upload-area" id="drop-zone">
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                <div class="upload-content" id="upload-placeholder">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p>Seret gambar ke sini atau <span>Klik untuk Upload</span></p>
+                    <small>Format: JPG, PNG (Max 5MB)</small>
+                </div>
+                <div class="preview-container" id="preview-container" style="display: none;">
+                    <img id="image-preview" src="" alt="Preview">
+                    <button class="btn-remove" onclick="removeImage()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="sendTicket()">
+                <span>Kirim & Analisis AI</span>
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+
+            <div id="result-card" class="result-card" style="display: none;">
+                <div class="result-header">
+                    <h3>Hasil Analisis AI</h3>
+                    <span id="ai-badge" class="badge">MENUNGGU</span>
+                </div>
+                <p id="ai-text">Menganalisis piksel gambar...</p>
+                <div class="progress-bar">
+                    <div id="confidence-bar" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <small>Confidence Level: <span id="confidence-text">0%</span></small>
+            </div>
+
+        </div>
+    </main>
+
+    <section class="info-section">
+        <h2 class="section-title">Bagaimana Mengenali Deepfake?</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <i class="fa-solid fa-eye"></i>
+                <h3>Pola Kedipan Mata</h3>
+                <p>Deepfake seringkali gagal meniru pola kedipan mata manusia yang alami atau frekuensi kedipan yang wajar.</p>
+            </div>
+            <div class="info-card">
+                <i class="fa-solid fa-face-grimace"></i>
+                <h3>Sinkronisasi Bibir</h3>
+                <p>Perhatikan ketidakcocokan antara gerakan bibir dengan suara yang dihasilkan, sering terlihat "lagging".</p>
+            </div>
+            <div class="info-card">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <h3>Artefak Visual</h3>
+                <p>Cek area perbatasan wajah, rambut, atau leher. Deepfake sering meninggalkan efek buram atau kotak-kotak di sana.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section">
+        <h2 class="section-title">Pertanyaan Umum</h2>
+        <div class="faq-container">
+            <div class="faq-item">
+                <button class="faq-question">Apa itu Deepfake? <i class="fa-solid fa-chevron-down"></i></button>
+                <div class="faq-answer">
+                    <p>Deepfake adalah media sintetis di mana seseorang dalam gambar atau video yang ada digantikan dengan rupa orang lain menggunakan kecerdasan buatan (AI).</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Apakah sistem ini 100% akurat? <i class="fa-solid fa-chevron-down"></i></button>
+                <div class="faq-answer">
+                    <p>Tidak ada sistem AI yang sempurna. Namun, model kami dilatih dengan dataset ribuan wajah untuk mencapai tingkat akurasi tinggi sebagai alat bantu verifikasi awal.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 AI Support Triage - Advanced Machine Learning Project</p>
+    </footer>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="scanner"></div>
+        <p>AI sedang memindai gambar...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

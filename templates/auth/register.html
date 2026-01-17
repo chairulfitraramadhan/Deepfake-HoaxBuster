@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fa-solid fa-rocket"></i>
+            <h2>Buat Akun</h2>
+            <p>Bergabunglah dengan AI Support Triage</p>
+        </div>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.username(class="form-input", placeholder="Username") }}
+            </div>
+            <div class="form-group">
+                {{ form.email(class="form-input", placeholder="Email") }}
+            </div>
+            <div class="form-group">
+                {{ form.password(class="form-input", placeholder="Password") }}
+            </div>
+            <div class="form-group">
+                {{ form.confirm_password(class="form-input", placeholder="Ulangi Password") }}
+            </div>
+
+            {{ form.submit(class="btn-submit", style="width: 100%;") }}
+        </form>
+        <p style="margin-top: 20px; font-size: 0.9rem;">
+            Sudah punya akun? <a href="{{ url_for('login') }}" style="color: #4F46E5; font-weight: bold;">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

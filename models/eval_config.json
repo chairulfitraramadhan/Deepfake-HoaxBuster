@@ -1,0 +1,9 @@
+{
+  "best_model_path": "/content/best_mobilenetv2_real_fake.keras",
+  "threshold": 0.05,
+  "label_map": {
+    "real": 0,
+    "fake": 1
+  },
+  "note": "probability is for class 'fake' (label=1). predict fake if prob >= threshold."
+}

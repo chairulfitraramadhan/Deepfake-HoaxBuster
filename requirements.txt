@@ -1,0 +1,12 @@
+blinker
+Flask
+flask-cors
+Flask-SQLAlchemy
+Flask-Login
+Flask-Bcrypt
+Flask-WTF
+email_validator
+tensorflow
+pillow
+numpy
+requests

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fa-solid fa-user-astronaut"></i>
+            <h2>Selamat Datang</h2>
+            <p>Silakan login untuk melanjutkan</p>
+        </div>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-input", placeholder="nama@email.com") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-input", placeholder="••••••••") }}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="checkbox-group">
+                    {{ form.remember(class="form-check") }}
+                    <label style="font-size: 0.9rem;">Ingat Saya</label>
+                </div>
+                <a href="{{ url_for('forgot_password') }}" style="font-size: 0.85rem; color: #4F46E5; text-decoration: none; font-weight: 600;">Lupa Password?</a>
+            </div>
+
+            {{ form.submit(class="btn-submit", style="width: 100%;") }}
+        </form>
+        <p style="margin-top: 20px; font-size: 0.9rem;">
+            Belum punya akun? <a href="{{ url_for('register') }}" style="color: #4F46E5; font-weight: bold;">Daftar</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

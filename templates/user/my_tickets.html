@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('dashboard') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard</a>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h2>📂 Riwayat Tiket</h2>
+        <div>
+            <a href="{{ url_for('my_tickets') }}" class="badge bg-secondary" style="text-decoration: none; cursor: pointer;">Semua</a>
+            <a href="{{ url_for('my_tickets', status='Open') }}" class="badge bg-warning" style="text-decoration: none; cursor: pointer;">Open</a>
+            <a href="{{ url_for('my_tickets', status='Resolved') }}" class="badge bg-success" style="text-decoration: none; cursor: pointer;">Resolved</a>
+        </div>
+    </div>
+    
+    <div class="ticket-list">
+        {% for ticket in tickets %}
+        <div class="card mb-3 p-3">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center;">
+                <h3 style="margin:0;"><a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" style="text-decoration: none; color: #4F46E5;">{{ ticket.title }}</a></h3>
+                <span class="badge bg-secondary">{{ ticket.status }}</span>
+            </div>
+            <p class="text-muted" style="margin: 5px 0;">Prioritas: {{ ticket.priority }} | {{ ticket.date_posted.strftime('%d-%m-%Y') }}</p>
+            <div style="margin-top: 5px;">
+                Status AI: <span class="badge {{ 'bg-success' if ticket.ai_status == 'ASLI' else 'bg-danger' }}">{{ ticket.ai_status }} ({{ ticket.ai_confidence }})</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">Lihat Detail</a>
+            </div>
+        </div>
+        {% else %}
+            <div class="card p-5 text-center">
+                <i class="fa-regular fa-folder-open" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
+                <p>Belum ada tiket.</p>
+                <a href="{{ url_for('new_ticket') }}" class="btn-submit">Buat Tiket Baru</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Support Triage</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    
+    <nav class="navbar">
+        <a href="{{ url_for('home') }}" class="logo"><i class="fa-solid fa-robot"></i> AI Support</a>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('my_tickets') }}">Riwayat</a>
+                <a href="{{ url_for('profile') }}">Profil</a>
+                <a href="{{ url_for('logout') }}" class="btn-logout" onclick="showLoading()">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}" class="btn-submit" style="color: white; padding: 8px 15px; width: auto;">Daftar</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-weight: 600; color: #4F46E5;">Sedang Memproses...</p>
+    </div>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer style="text-align: center; padding: 20px; color: #6B7280; font-size: 0.9rem; margin-top: auto;">
+        &copy; 2025 AI Support Triage System
+    </footer>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        // Auto-show Loading saat Submit Form
+        $('form').on('submit', function() {
+            if (this.checkValidity()) {
+                showLoading();
+            }
+        });
+
+        // Tampilkan Pesan Flask dengan SweetAlert
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    Swal.fire({
+                        icon: '{{ "error" if category == "danger" else category }}',
+                        title: '{{ "Berhasil!" if category == "success" else "Perhatian" }}',
+                        text: '{{ message }}',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </script>
+</body>
+</html>

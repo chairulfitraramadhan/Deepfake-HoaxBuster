@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fa-solid fa-key" style="font-size: 3rem; color: #4F46E5; margin-bottom: 10px;"></i>
+            <h2>Buat Password Baru</h2>
+        </div>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.password(class="form-input", placeholder="Password Baru") }}
+            </div>
+            <div class="form-group">
+                {{ form.confirm_password(class="form-input", placeholder="Konfirmasi Password") }}
+            </div>
+            {{ form.submit(class="btn-submit", style="width: 100%;") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

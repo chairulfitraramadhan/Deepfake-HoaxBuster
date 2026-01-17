@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card p-4">
+        <h1>👋 Halo, {{ current_user.username }}!</h1>
+        <p class="text-muted">Selamat datang di panel AI Support Triage.</p>
+        
+        <div class="stats-grid mt-4" style="display: flex; gap: 20px;">
+            <div style="background: #e0e7ff; padding: 20px; border-radius: 12px; flex: 1; text-align: center;">
+                <h2 style="color: #4F46E5; font-size: 2.5rem; margin: 0;">{{ total }}</h2>
+                <p style="margin: 0; color: #4338ca; font-weight: bold;">Total Tiket</p>
+            </div>
+            <div style="background: #dcfce7; padding: 20px; border-radius: 12px; flex: 1; text-align: center;">
+                <h2 style="color: #15803d; font-size: 2.5rem; margin: 0;">Online</h2>
+                <p style="margin: 0; color: #166534; font-weight: bold;">Status AI</p>
+            </div>
+        </div>
+
+        <h3 class="mt-4">Aksi Cepat</h3>
+        <div class="action-buttons">
+            <a href="{{ url_for('new_ticket') }}" class="btn-submit">
+                <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Buat Tiket Baru
+            </a>
+            <a href="{{ url_for('my_tickets') }}" class="btn-secondary">
+                <i class="fa-solid fa-clock-rotate-left" style="margin-right: 8px;"></i> Lihat Riwayat
+            </a>
+            <a href="{{ url_for('profile') }}" class="btn-secondary">
+                <i class="fa-solid fa-user-gear" style="margin-right: 8px;"></i> Edit Profil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
