@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import "./App.css";
 import { getHistory, health, predictFile, uploadUrl } from "./api";
+
+function formatPct(x) {
+  return `${(x * 100).toFixed(2)}%`;
+}
+
+function safeText(x) {
+  return x == null ? "" : String(x);
+}
 
 export default function App() {
   const [server, setServer] = useState(null);
@@ -11,9 +20,14 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const [q, setQ] = useState("");
+  const [filterLabel, setFilterLabel] = useState("ALL");
+
   const isVideo = useMemo(() => {
     if (!file) return false;
-    return file.type.startsWith("video/");
+    return file.type?.startsWith("video/");
   }, [file]);
 
   useEffect(() => {
@@ -30,7 +44,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const h = await getHistory(20);
+        const h = await getHistory(30);
         setHistory(h.items || []);
       } catch {
         // ignore
@@ -47,6 +61,34 @@ export default function App() {
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  const filteredHistory = useMemo(() => {
+    let items = [...history];
+
+    if (filterLabel !== "ALL") {
+      items = items.filter((it) => safeText(it.label).toUpperCase() === filterLabel);
+    }
+
+    if (q.trim()) {
+      const s = q.trim().toLowerCase();
+      items = items.filter((it) => safeText(it.filename).toLowerCase().includes(s));
+    }
+
+    return items;
+  }, [history, q, filterLabel]);
+
+  function onPickFile(f) {
+    setErr("");
+    setResult(null);
+    setFile(f || null);
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    setIsDragging(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) onPickFile(f);
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -69,132 +111,226 @@ export default function App() {
     }
   }
 
+  const statusText = server?.status === "ok" ? "OK" : "Belum terhubung";
+  const modelLoaded = Boolean(server?.model_loaded);
+
+  const label = result?.result?.label ? String(result.result.label).toUpperCase() : "";
+  const fakeProb = result?.result?.fake_prob ?? null;
+  const threshold = result?.result?.threshold ?? null;
+
+  const badgeClass =
+    label === "REAL" ? "badge badgeReal" : label === "FAKE" ? "badge badgeFake" : "badge";
+
+  const progressWidth = fakeProb == null ? "0%" : `${Math.max(0, Math.min(1, fakeProb)) * 100}%`;
+
   return (
-    <div style={{ maxWidth: 980, margin: "24px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ marginBottom: 6 }}>Deepfake HoaxBuster</h1>
-      <p style={{ marginTop: 0, color: "#444" }}>
-        Backend status: <b>{server?.status === "ok" ? "OK" : "Belum terhubung"}</b>{" "}
-        {server?.model_loaded ? "(model loaded)" : ""}
-      </p>
+    <div className="container">
+      <div className="topbar">
+        <div className="brand">
+          <h1>Deepfake HoaxBuster</h1>
+          <p>
+            Deteksi Real vs Fake (deepfake) berbasis MobileNetV2. Jalankan inferensi cepat dari gambar/video dan simpan riwayat hasil.
+          </p>
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>1) Upload & Predict</h2>
+        <div className="chips">
+          <div className="chip">
+            Backend: <b>{statusText}</b>
+          </div>
+          <div className="chip">
+            Model: <b>{modelLoaded ? "loaded" : "not loaded"}</b>
+          </div>
+          {result?.model?.img_size != null && (
+            <div className="chip">
+              Input: <b>{result.model.img_size}</b>
+            </div>
+          )}
+          {result?.timing?.latency_ms != null && (
+            <div className="chip">
+              Latency: <b>{result.timing.latency_ms} ms</b>
+            </div>
+          )}
+        </div>
+      </div>
 
-          <form onSubmit={onSubmit}>
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-            <div style={{ marginTop: 12 }}>
-              <button type="submit" disabled={loading} style={{ padding: "10px 12px" }}>
+      <div className="grid">
+        <div className="card">
+          <h2>1) Upload & Predict</h2>
+          <p className="muted">
+            Unggah gambar/video wajah. Untuk hasil lebih stabil, gunakan wajah yang terlihat jelas dan tidak blur.
+          </p>
+
+          <div
+            className={`dropzone ${isDragging ? "dropzoneActive" : ""}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={onDrop}
+          >
+            <div className="row">
+              <div className="fileName">{file ? file.name : "Drag & drop file di sini atau pilih file."}</div>
+              <label className="btn">
+                Pilih File
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
+
+            <div className="row">
+              <button className="btn btnPrimary" onClick={onSubmit} disabled={loading}>
                 {loading ? "Memproses..." : "Analisis"}
               </button>
+
+              <div className="muted">
+                Maks frame video: <b>12</b>
+              </div>
             </div>
-          </form>
+          </div>
 
           {previewUrl && (
-            <div style={{ marginTop: 16 }}>
-              <h3 style={{ margin: "8px 0" }}>Preview</h3>
+            <div className="preview">
               {!isVideo ? (
-                <img src={previewUrl} alt="preview" style={{ maxWidth: "100%", borderRadius: 10 }} />
+                <img src={previewUrl} alt="preview" />
               ) : (
-                <video src={previewUrl} controls style={{ width: "100%", borderRadius: 10 }} />
+                <video src={previewUrl} controls />
               )}
             </div>
           )}
 
           {err && (
-            <p style={{ color: "crimson", marginTop: 12 }}>
+            <div className="error">
               <b>Error:</b> {err}
-            </p>
+            </div>
           )}
         </div>
 
-        <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>2) Result</h2>
+        <div className="card">
+          <h2>2) Result</h2>
 
           {!result ? (
-            <p style={{ color: "#555" }}>Belum ada hasil. Upload file lalu klik Analisis.</p>
+            <p className="muted">Belum ada hasil. Upload file lalu klik Analisis.</p>
           ) : (
             <>
-              <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}>
-                <p style={{ margin: 0 }}>
-                  <b>Label:</b> {result.result.label}
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Confidence:</b> {(result.result.confidence * 100).toFixed(2)}%
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Fake prob:</b> {result.result.fake_prob.toFixed(6)}
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Threshold:</b> {result.result.threshold}
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Latency:</b> {result.timing.latency_ms} ms
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Model:</b> {result.model.version} (img {result.model.img_size})
-                </p>
-                <p style={{ margin: "6px 0" }}>
-                  <b>Created:</b> {result.created_at}
-                </p>
+              <div className={badgeClass}>
+                Label: <span>{label}</span>
+              </div>
+
+              <div className="progressWrap">
+                <div className="muted">
+                  Fake probability: <b>{fakeProb == null ? "-" : fakeProb.toFixed(6)}</b>
+                </div>
+                <div className="progressBar" aria-label="fake probability bar">
+                  <div className="progressFill" style={{ width: progressWidth }} />
+                </div>
+              </div>
+
+              <div className="kv">
+                <div className="k">Confidence</div>
+                <div>{formatPct(result.result.confidence)}</div>
+
+                <div className="k">Threshold</div>
+                <div>{threshold}</div>
+
+                <div className="k">Model</div>
+                <div>
+                  {result.model.version} (img {result.model.img_size})
+                </div>
+
+                <div className="k">Created</div>
+                <div className="small">{result.created_at}</div>
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <h3 style={{ margin: "8px 0" }}>Saved Media (from backend)</h3>
-                <p style={{ marginTop: 0, color: "#555" }}>
-                  <code>{uploadUrl(result.filename)}</code>
-                </p>
+                <div className="muted" style={{ marginBottom: 8 }}>
+                  Saved media (backend):
+                </div>
+                <div className="small" style={{ wordBreak: "break-all" }}>
+                  {uploadUrl(result.filename)}
+                </div>
 
-                {result.media_type === "image" ? (
-                  <img
-                    src={uploadUrl(result.filename)}
-                    alt="uploaded"
-                    style={{ maxWidth: "100%", borderRadius: 10, border: "1px solid #eee" }}
-                  />
-                ) : (
-                  <video
-                    src={uploadUrl(result.filename)}
-                    controls
-                    style={{ width: "100%", borderRadius: 10, border: "1px solid #eee" }}
-                  />
-                )}
+                <div className="preview" style={{ marginTop: 10 }}>
+                  {result.media_type === "image" ? (
+                    <img src={uploadUrl(result.filename)} alt="uploaded" />
+                  ) : (
+                    <video src={uploadUrl(result.filename)} controls />
+                  )}
+                </div>
               </div>
             </>
           )}
         </div>
       </div>
 
-      <div style={{ marginTop: 16, border: "1px solid #ddd", borderRadius: 10, padding: 16 }}>
-        <h2 style={{ marginTop: 0 }}>3) History</h2>
-        {history.length === 0 ? (
-          <p style={{ color: "#555" }}>Belum ada data history.</p>
+      <div className="card" style={{ marginTop: 14 }}>
+        <h2>3) History</h2>
+
+        <div className="tools">
+          <input
+            className="input"
+            placeholder="Search filename..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+
+          <select className="select" value={filterLabel} onChange={(e) => setFilterLabel(e.target.value)}>
+            <option value="ALL">All</option>
+            <option value="REAL">REAL</option>
+            <option value="FAKE">FAKE</option>
+          </select>
+        </div>
+
+        {filteredHistory.length === 0 ? (
+          <p className="muted">Belum ada data history atau tidak ada yang cocok dengan filter.</p>
         ) : (
-          <table width="100%" cellPadding="8" style={{ borderCollapse: "collapse" }}>
+          <table className="table">
             <thead>
-              <tr style={{ background: "#f6f6f6" }}>
-                <th align="left">ID</th>
-                <th align="left">Type</th>
-                <th align="left">Filename</th>
-                <th align="left">Label</th>
-                <th align="left">Confidence</th>
-                <th align="left">Created</th>
+              <tr>
+                <th>ID</th>
+                <th>Preview</th>
+                <th>Filename</th>
+                <th>Label</th>
+                <th>Confidence</th>
+                <th>Created</th>
               </tr>
             </thead>
             <tbody>
-              {history.map((it) => (
-                <tr key={it.id} style={{ borderTop: "1px solid #eee" }}>
-                  <td>{it.id}</td>
-                  <td>{it.media_type}</td>
-                  <td>{it.filename}</td>
-                  <td>{it.label}</td>
-                  <td>{(it.confidence * 100).toFixed(2)}%</td>
-                  <td style={{ fontSize: 12, color: "#555" }}>{it.created_at}</td>
-                </tr>
-              ))}
+              {filteredHistory.map((it) => {
+                const itLabel = safeText(it.label).toUpperCase();
+                const itBadge =
+                  itLabel === "REAL" ? "badge badgeReal" : itLabel === "FAKE" ? "badge badgeFake" : "badge";
+
+                return (
+                  <tr key={it.id}>
+                    <td className="small">{it.id}</td>
+                    <td>
+                      <div className="thumb">
+                        {it.media_type === "image" ? (
+                          <img src={uploadUrl(it.filename)} alt="thumb" />
+                        ) : (
+                          <img
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='68'%3E%3Crect width='100%25' height='100%25' fill='%23000000'/%3E%3Cpath d='M38 22 L60 34 L38 46 Z' fill='%23ffffff' opacity='0.7'/%3E%3C/svg%3E"
+                            alt="video"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: 360, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {it.filename}
+                    </td>
+                    <td>
+                      <span className={itBadge}>{itLabel}</span>
+                    </td>
+                    <td>{formatPct(it.confidence)}</td>
+                    <td className="small">{it.created_at}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

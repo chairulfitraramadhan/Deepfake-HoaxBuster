@@ -8,24 +8,19 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+from flask import send_from_directory
 
 import numpy as np
 
-# TensorFlow / Keras
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
-# OpenCV (untuk video)
 try:
     import cv2
 except Exception:
     cv2 = None
 
-
-# =========================
-# CONFIG
-# =========================
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 MODEL_DIR = os.path.join(BASE_DIR, "models")
@@ -35,21 +30,17 @@ CFG_PATH = os.path.join(MODEL_DIR, "eval_config.json")
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-IMG_SIZE = 160  # sesuai training kamu (MobileNetV2 input 160x160)
+IMG_SIZE = 160
 
 ALLOWED_IMAGE_EXT = {"jpg", "jpeg", "png", "webp"}
 ALLOWED_VIDEO_EXT = {"mp4", "mov", "avi", "mkv"}
 
-MAX_CONTENT_LENGTH = 200 * 1024 * 1024  # 200 MB (ubah kalau perlu)
+MAX_CONTENT_LENGTH = 200 * 1024 * 1024
 
-# Video sampling config (bisa kamu ubah)
 DEFAULT_MAX_FRAMES = 12
-DEFAULT_STRIDE = 0  # 0 = auto uniform sampling
+DEFAULT_STRIDE = 0  
 
 
-# =========================
-# APP INIT
-# =========================
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-me"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///hoaxbuster.db"
@@ -60,21 +51,17 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 CORS(app)
 db = SQLAlchemy(app)
 
-# =========================
-# DB MODELS
-# =========================
 class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(255), nullable=False)
-    media_type = db.Column(db.String(20), nullable=False)  # image/video
-    label = db.Column(db.String(20), nullable=False)       # REAL/FAKE
+    media_type = db.Column(db.String(20), nullable=False)  
+    label = db.Column(db.String(20), nullable=False)       
     fake_prob = db.Column(db.Float, nullable=False)
     confidence = db.Column(db.Float, nullable=False)
     threshold = db.Column(db.Float, nullable=False)
     model_version = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # JSON string (opsional) untuk simpan per-frame scores jika video
     extra_json = db.Column(db.Text, nullable=True)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -102,13 +89,8 @@ class Prediction(db.Model):
 with app.app_context():
     db.create_all()
 
-
-# =========================
-# LOAD CONFIG + MODEL
-# =========================
 def load_eval_config() -> Dict[str, Any]:
     if not os.path.exists(CFG_PATH):
-        # fallback kalau config tidak ada
         return {"threshold": 0.5, "label_real": "REAL", "label_fake": "FAKE", "model_version": "v1"}
     with open(CFG_PATH, "r", encoding="utf-8") as f:
         cfg = json.load(f)
@@ -132,10 +114,6 @@ def get_model() -> tf.keras.Model:
         _model = load_model(MODEL_PATH)
     return _model
 
-
-# =========================
-# HELPERS
-# =========================
 def allowed_file(filename: str) -> bool:
     if "." not in filename:
         return False
@@ -159,19 +137,12 @@ def preprocess_rgb_frame(frame_rgb: np.ndarray) -> np.ndarray:
     """
     frame_resized = cv2.resize(frame_rgb, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_AREA)
     x = frame_resized.astype("float32")
-    x = preprocess_input(x)  # MobileNetV2 preprocess
+    x = preprocess_input(x)  
     x = np.expand_dims(x, axis=0)
     return x
 
 
 def decide_from_fake_prob(fake_prob: float) -> Tuple[str, float]:
-    """
-    model output sigmoid -> probabilitas class 1 (fake)
-    label fake jika prob >= threshold
-    confidence ditampilkan sesuai label (lebih intuitif):
-      - FAKE: conf = fake_prob
-      - REAL: conf = 1 - fake_prob
-    """
     is_fake = fake_prob >= THRESHOLD
     if is_fake:
         return LABEL_FAKE, float(fake_prob)
@@ -208,9 +179,6 @@ def predict_image(file_path: str) -> Dict[str, Any]:
 
 
 def sample_video_frames(video_path: str, max_frames: int = DEFAULT_MAX_FRAMES) -> List[Tuple[int, np.ndarray]]:
-    """
-    Return list of (frame_index, frame_rgb)
-    """
     if cv2 is None:
         raise RuntimeError("opencv-python belum terpasang. Install: pip install opencv-python")
 
@@ -220,7 +188,6 @@ def sample_video_frames(video_path: str, max_frames: int = DEFAULT_MAX_FRAMES) -
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
 
-    # Jika total_frames tidak diketahui, fallback: ambil sequential sampai max_frames
     if total_frames <= 0:
         frames = []
         idx = 0
@@ -234,7 +201,6 @@ def sample_video_frames(video_path: str, max_frames: int = DEFAULT_MAX_FRAMES) -
         cap.release()
         return frames
 
-    # Uniform sampling indices
     if total_frames <= max_frames:
         indices = list(range(total_frames))
     else:
@@ -265,17 +231,16 @@ def predict_video(video_path: str, max_frames: int = DEFAULT_MAX_FRAMES) -> Dict
     for idx, rgb in frames:
         x = preprocess_rgb_frame(rgb)
         fake_prob = float(model.predict(x, verbose=0)[0][0])
+        fake_prob = 1.0 - real_prob
         frame_scores.append({"frame_index": idx, "fake_prob": fake_prob})
 
     latency_ms = int((time.time() - t0) * 1000)
 
-    # Agregasi: mean (bisa kamu ubah ke max / median)
     probs = [s["fake_prob"] for s in frame_scores]
     agg_fake_prob = float(np.mean(probs))
 
     label, confidence = decide_from_fake_prob(agg_fake_prob)
 
-    # Keyframe paling mencurigakan (top 3)
     topk = sorted(frame_scores, key=lambda x: x["fake_prob"], reverse=True)[:3]
 
     return {
@@ -291,10 +256,6 @@ def predict_video(video_path: str, max_frames: int = DEFAULT_MAX_FRAMES) -> Dict
         "sampled_frames_count": len(frames),
     }
 
-
-# =========================
-# ROUTES
-# =========================
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({
@@ -321,11 +282,6 @@ def get_config():
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
-    """
-    multipart/form-data:
-      - file: image/video
-      - max_frames (optional): int, untuk video sampling
-    """
     if "file" not in request.files:
         return jsonify({"error": "Field 'file' tidak ditemukan."}), 400
 
@@ -357,12 +313,9 @@ def predict():
                 "top_suspicious_frames": result.get("top_suspicious_frames", []),
                 "sampled_frames_count": result.get("sampled_frames_count", 0),
             }
-            # supaya response tidak terlalu besar, hapus frame_scores dari result utama jika mau
-            # tapi untuk saat ini kita biarkan tampil
         else:
             return jsonify({"error": "Tipe media tidak dikenali."}), 400
 
-        # simpan ke DB
         pred = Prediction(
             filename=save_name,
             media_type=media_type,
@@ -404,7 +357,6 @@ def predict():
 
 
     except Exception as e:
-        # kalau gagal, hapus file upload biar tidak numpuk
         try:
             if os.path.exists(save_path):
                 os.remove(save_path)
@@ -416,10 +368,7 @@ def predict():
 
 @app.route("/api/history", methods=["GET"])
 def history():
-    """
-    query params optional:
-      - limit (default 20)
-    """
+
     limit = request.args.get("limit", type=int) or 20
     limit = max(1, min(limit, 200))
 
@@ -435,12 +384,15 @@ def history_detail(pred_id: int):
     item = Prediction.query.get_or_404(pred_id)
     return jsonify(item.to_dict())
 
+@app.route("/uploads/<path:filename>")
+def serve_upload(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-# =========================
-# MAIN
-# =========================
+@app.route("/")
+def home():
+    return {"status": "ok", "message": "Backend running. Open frontend at http://localhost:5173"}
+
 if __name__ == "__main__":
-    # Load model once at startup (optional)
     try:
         get_model()
         print(f"Model loaded: {MODEL_PATH}")

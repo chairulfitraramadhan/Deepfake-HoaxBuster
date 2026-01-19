@@ -28,36 +28,37 @@ Proyek ini dikembangkan untuk memenuhi kebutuhan **UAS Mata Kuliah Machine Learn
 
 ## Struktur Repository
 
+## Struktur Repository
+
+```text
 Deepfake-HoaxBuster/
-├─ app.py # Backend Flask (API + server)
-├─ requirements.txt # Dependency backend
-├─ models/
-│ ├─ best_mobilenetv2_real_fake.keras # Model terlatih
-│ └─ eval_config.json # Threshold + label map
-├─ templates/ # HTML templates (Flask)
-│ ├─ base.html
-│ ├─ landing.html
-│ ├─ index.html
-│ └─ auth/ & user/ ...
-├─ static/
-│ └─ css/style.css
-├─ instance/ # runtime folder (db/config lokal) - diabaikan Git, disiapkan via .gitkeep
-│ └─ .gitkeep
-├─ uploads/ # runtime folder upload gambar - diabaikan Git, disiapkan via .gitkeep
-│ └─ .gitkeep
-├─ static/profile_pics/ # runtime folder foto profil - diabaikan Git, disiapkan via .gitkeep
-│ └─ .gitkeep
-└─ frontend/ # Frontend React + Vite
-├─ package.json
-├─ vite.config.js
-└─ src/
-├─ api.js
-└─ App.jsx, main.jsx, ...
-
-yaml
-Salin kode
-
----
+├── app.py                              # Backend Flask (API + server)
+├── requirements.txt                    # Dependency backend
+├── models/
+│   ├── best_mobilenetv2_real_fake.keras  # Model terlatih MobileNetV2
+│   └── eval_config.json                # Konfigurasi threshold & label map
+├── templates/                          # HTML Templates (Flask)
+│   ├── base.html
+│   ├── landing.html
+│   ├── index.html
+│   └── auth/                           # Folder auth & user (opsional)
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── profile_pics/                   # Runtime folder foto profil (Ignored)
+│       └── .gitkeep
+├── instance/                           # Runtime config/DB lokal (Ignored)
+│   └── .gitkeep
+├── uploads/                            # Runtime upload gambar (Ignored)
+│   └── .gitkeep
+└── frontend/                           # Frontend React + Vite
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── api.js
+        ├── App.jsx
+        └── main.jsxyaml
+```
 
 ## Cara Menjalankan (Local)
 
@@ -66,35 +67,36 @@ Salin kode
 
 #### 1) Buat virtual environment (opsional tapi disarankan)
 **Windows (PowerShell)**
-```bash
+``` bash
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-Mac/Linux
+```
 
-bash
-Salin kode
+**Linux:**
+``` bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
 2) Install dependency
-bash
-Salin kode
+``` bash
 pip install -r requirements.txt
-3) Jalankan backend
-bash
-Salin kode
+```
+4) Jalankan backend
+``` bash
 python app.py
+```
 Biasanya backend berjalan di:
-
+```
 http://127.0.0.1:5000 (tergantung konfigurasi di app.py)
-
+```
 B. Menjalankan Frontend (React + Vite)
 Buka terminal baru dan masuk ke folder frontend/
 
-bash
-Salin kode
+``` bash
 cd frontend
 npm install
 npm run dev
+```
 Biasanya frontend berjalan di:
 
 http://localhost:5173
@@ -168,10 +170,8 @@ Chairul Fitra Ramadhan (Kelompok 16 – IF B Sore)
 
 UAS Machine Learning
 
-yaml
-Salin kode
-
----
+```yaml
+```
 
 ## Langkah cepat yang harus kamu lakukan sekarang
 1) Buat file `README.md` di root project.
@@ -182,3 +182,4 @@ Salin kode
 git add README.md
 git commit -m "docs: add UAS README with run instructions"
 git push
+```
