@@ -16,13 +16,14 @@ Aplikasi web untuk mendeteksi wajah Real vs Fake (deepfake) berbasis Deep Learni
 
 ## Demo
 
+### Live Demo
+Coba aplikasi langsung di sini: **[Deepfake HoaxBuster (Vercel)](https://deepfake-hoax-buster.vercel.app/)**
+
 ### Screenshot Aplikasi
-![UI Screenshot](docs/screenshot.png)
-*Screenshot akan ditambahkan setelah deployment*
+![UI Screenshot](docs/Dashboard.png)
 
 ### Video Demo
 **Video Demo Aplikasi**: [Link Video Demo YouTube/Drive]
-> *Video demo akan ditambahkan setelah presentasi*
 
 ### Preview Fitur
 - Upload gambar wajah
@@ -449,7 +450,7 @@ notebooks/training_pipeline.ipynb
 
 ### Base URL
 ```
-http://127.0.0.1:5000/api
+https://chairul01-deepfake-backend.hf.space
 ```
 
 ### Endpoints
@@ -648,13 +649,13 @@ pip install tensorflow-macos tensorflow-metal
 
 Cek `frontend/src/api.js`, pastikan base URL benar:
 ```javascript
-const API_BASE_URL = 'http://127.0.0.1:5000/api';  // Sesuaikan dengan backend
+const API_BASE_URL = 'https://chairul01-deepfake-backend.hf.space';  // Sesuaikan dengan backend
 ```
 
 Pastikan backend running:
 ```bash
 # Di terminal backend, pastikan ada output:
-# * Running on http://127.0.0.1:5000
+# * Running on https://chairul01-deepfake-backend.hf.space
 ```
 
 ### 6. Model Inference Sangat Lambat
@@ -806,7 +807,6 @@ with open('models/eval_config.json', 'r') as f:
 
 ### Datasets
 - [140k Real and Fake Faces - Kaggle](https://www.kaggle.com/datasets/xhlulu/140k-real-and-fake-faces)
-- [Flickr-Faces-HQ Dataset (FFHQ)](https://github.com/NVlabs/ffhq-dataset)
 
 ### Tools & Libraries
 - [MobileNetV2 Pretrained Models](https://www.tensorflow.org/api_docs/python/tf/keras/applications/MobileNetV2)
@@ -828,15 +828,6 @@ This project is created for educational purposes (UAS Machine Learning Project).
 - **Framework**: TensorFlow & Keras team for excellent deep learning framework
 - **Pretrained Model**: Google Research for MobileNetV2 architecture
 - **Guidance**: Dosen Machine Learning untuk guidance dan feedback
-
----
-
-## Contact & Support
-
-Jika ada pertanyaan atau issue, silakan:
-- **Open Issue**: [GitHub Issues](https://github.com/chairulfitraramadhan/Deepfake-HoaxBuster/issues)
-- **Email**: [Contact melalui GitHub profile]
-- **Discussion**: [GitHub Discussions]
 
 ---
 
