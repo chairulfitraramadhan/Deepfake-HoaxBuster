@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://chairul01-deepfake-backend.hf.space";
 
 export async function health() {
   const res = await fetch(`${API_BASE}/api/health`);
